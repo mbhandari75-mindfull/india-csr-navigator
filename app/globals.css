@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --saffron: #E07A2F;
+  --saffron-l: #FAF3EB;
+  --saffron-border: #E8D5B0;
+  --teal: #0D7377;
+  --teal-l: #E8F4F5;
+  --moss: #4A7C59;
+  --moss-l: #EDF5F0;
+  --indigo: #3B5998;
+  --indigo-l: #EEF1F8;
+  --plum: #6B4C9A;
+  --plum-l: #F3EEF9;
+  --rose: #B44D6E;
+  --rose-l: #F9EEF2;
+  --tan: #8B6F47;
+  --tan-l: #F5EFE6;
+  --ink: #1A1A1A;
+  --ink-soft: #3D3830;
+  --ink-muted: #6B6560;
+  --ink-faint: #A0978A;
+  --ink-ghost: #C4BDB3;
+  --cream: #FAF7F2;
+  --cream-warm: #F5EDE0;
+  --border: #E8E4DF;
+  --border-warm: #E8DDD0;
+  --white: #FFFFFF;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-serif { font-family: 'Source Serif 4', Georgia, serif; }
+.font-mono-nums { font-family: 'JetBrains Mono', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+/* Sector color map — consistent everywhere */
+.sector-education   { background: #EEF1F8; color: #3B5998; border-color: #C5CEEA; }
+.sector-health      { background: #E8F4F5; color: #0D7377; border-color: #A8D5D7; }
+.sector-environment { background: #EDF5F0; color: #4A7C59; border-color: #B0D4BA; }
+.sector-rural       { background: #F5EFE6; color: #8B6F47; border-color: #D4C0A4; }
+.sector-livelihoods { background: #FAF3EB; color: #E07A2F; border-color: #E8D5B0; }
+.sector-women       { background: #F9EEF2; color: #B44D6E; border-color: #DFB0BF; }
+.sector-wash        { background: #F3EEF9; color: #6B4C9A; border-color: #C8B8E4; }
+.sector-mhm         { background: #FFF0E8; color: #C45A1A; border-color: #F0C0A0; }
