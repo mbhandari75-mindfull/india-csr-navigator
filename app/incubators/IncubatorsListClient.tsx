@@ -4,6 +4,12 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Incubator } from '@/lib/supabase-server'
 
+function toArr(val: string[] | string | null | undefined): string[] {
+  if (!val) return []
+  if (Array.isArray(val)) return val
+  return String(val).split(/,\s*/).filter(Boolean)
+}
+
 // ─── type/colour helpers ────────────────────────────────────────────────────
 
 const INCUBATOR_TYPE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -100,11 +106,11 @@ function IncubatorCard({ inc, programmeCount }: { inc: Incubator; programmeCount
         )}
 
         {/* Sectors */}
-        {inc.sectors && inc.sectors.length > 0 && (
+        {toArr(inc.sectors).length > 0 && (
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
-            {inc.sectors.slice(0, 5).map(s => <SectorChip key={s} sector={s} />)}
-            {inc.sectors.length > 5 && (
-              <span style={{ fontSize: 10, color: '#9A9A94' }}>+{inc.sectors.length - 5}</span>
+            {toArr(inc.sectors).slice(0, 5).map(s => <SectorChip key={s} sector={s} />)}
+            {toArr(inc.sectors).length > 5 && (
+              <span style={{ fontSize: 10, color: '#9A9A94' }}>+{toArr(inc.sectors).length - 5}</span>
             )}
           </div>
         )}
@@ -144,7 +150,7 @@ export default function IncubatorsListClient({
   const filtered = useMemo(() => {
     let list = incubators.filter(inc => {
       if (typeFilter && inc.incubator_type !== typeFilter) return false
-      if (sectorFilter && !(inc.sectors || []).some(s => s.toLowerCase().includes(sectorFilter.toLowerCase()))) return false
+      if (sectorFilter && !toArr(inc.sectors).some(s => s.toLowerCase().includes(sectorFilter.toLowerCase()))) return false
       if (locationFilter === 'india' && inc.hq_country && inc.hq_country !== 'India') return false
       if (locationFilter === 'international' && (!inc.hq_country || inc.hq_country === 'India')) return false
       if (appModelFilter && inc.application_model !== appModelFilter) return false

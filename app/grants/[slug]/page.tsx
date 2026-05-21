@@ -11,11 +11,12 @@ export async function generateStaticParams() {
   return (data || []).map(r => ({ slug: r.programme_slug }))
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const sb = createServerClient()
   const { data } = await sb.from('active_grants')
     .select('programme_name, programme_description, organisations(name)')
-    .eq('programme_slug', params.slug)
+    .eq('programme_slug', slug)
     .single()
   if (!data) return { title: 'Grant — India CSR Navigator' }
   const org = (data.organisations as any)?.name || ''
@@ -62,12 +63,13 @@ function BurdenBadge({ burden }: { burden: string | null }) {
   return <span style={{ color: s.color, fontWeight: 600 }}>{s.label}</span>
 }
 
-export default async function GrantDetailPage({ params }: { params: { slug: string } }) {
+export default async function GrantDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const sb = createServerClient()
   const { data: g, error } = await sb
     .from('active_grants')
     .select('*, organisations(id, name)')
-    .eq('programme_slug', params.slug)
+    .eq('programme_slug', slug)
     .single()
 
   if (error || !g) notFound()

@@ -4,15 +4,23 @@ import Link from 'next/link'
 
 export const revalidate = 3600
 
+// Some DB text[] columns come back as comma-separated strings — normalise to array
+function toArr(val: string[] | string | null | undefined): string[] {
+  if (!val) return []
+  if (Array.isArray(val)) return val
+  return String(val).split(/,\s*/).filter(Boolean)
+}
+
 export async function generateStaticParams() {
   const sb = createServerClient()
   const { data } = await sb.from('incubators').select('slug')
   return (data || []).map(r => ({ slug: r.slug }))
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const sb = createServerClient()
-  const { data } = await sb.from('incubators').select('name, description').eq('slug', params.slug).single()
+  const { data } = await sb.from('incubators').select('name, description').eq('slug', slug).single()
   if (!data) return { title: 'Incubator — India CSR Navigator' }
   return {
     title: `${data.name} — India CSR Navigator`,
@@ -146,9 +154,9 @@ function ProgrammeCard({ prog }: { prog: IncubatorProgramme }) {
       )}
 
       {/* Partners */}
-      {prog.partners && prog.partners.length > 0 && (
+      {toArr(prog.partners).length > 0 && (
         <div style={{ fontSize: 11, color: '#9A9A94', marginBottom: 8 }}>
-          Partners: {prog.partners.join(' · ')}
+          Partners: {toArr(prog.partners).join(' · ')}
         </div>
       )}
 
@@ -216,13 +224,13 @@ function CohortEntry({ cohort, programmeName }: { cohort: IncubatorCohort; progr
       )}
 
       {/* Notable winners — most valuable data */}
-      {cohort.notable_winners && cohort.notable_winners.length > 0 && (
+      {toArr(cohort.notable_winners).length > 0 && (
         <div>
           <div style={{ fontSize: 10, color: '#6B4C9A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
             Winners
           </div>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {cohort.notable_winners.map((w, i) => (
+            {toArr(cohort.notable_winners).map((w, i) => (
               <span key={i} style={{ background: '#F3EEF9', color: '#6B4C9A', fontSize: 11, fontWeight: 500, padding: '3px 9px', borderRadius: 12 }}>
                 {w}
               </span>
@@ -245,13 +253,14 @@ function CohortEntry({ cohort, programmeName }: { cohort: IncubatorCohort; progr
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
-export default async function IncubatorDetailPage({ params }: { params: { slug: string } }) {
+export default async function IncubatorDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const sb = createServerClient()
 
   const { data: inc, error } = await sb
     .from('incubators')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   if (error || !inc) notFound()
@@ -350,11 +359,11 @@ export default async function IncubatorDetailPage({ params }: { params: { slug: 
               {incubator.description && (
                 <p style={{ fontSize: 14, color: '#3D3830', lineHeight: 1.7, margin: '0 0 14px' }}>{incubator.description}</p>
               )}
-              {incubator.sectors && incubator.sectors.length > 0 && (
+              {toArr(incubator.sectors).length > 0 && (
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ fontSize: 11, color: '#9A9A94', marginBottom: 6 }}>Sectors</div>
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                    {incubator.sectors.map(s => (
+                    {toArr(incubator.sectors).map(s => (
                       <span key={s} style={{ background: '#F5F3EE', color: '#6B6560', fontSize: 11, fontWeight: 500, padding: '3px 9px', borderRadius: 10 }}>{s}</span>
                     ))}
                   </div>
