@@ -91,11 +91,11 @@ function ProgrammeCard({ prog }: { prog: IncubatorProgramme }) {
   const cohorts = prog.incubator_cohorts || []
 
   return (
-    <div style={{ border: '1px solid #E8E4DF', borderRadius: 8, padding: '16px 18px', marginBottom: 10 }}>
+    <div style={{ border: '1px solid #E5E5E5', borderRadius: 8, padding: '20px 24px', marginBottom: 16, background: '#FFFFFF', width: '100%', boxSizing: 'border-box', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
       {/* Programme header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 6 }}>
             <Pill label={ts.label} bg={ts.bg} text={ts.text} />
             {prog.status === 'active' && (
               <span style={{ background: '#E8F4ED', color: '#1A5C2E', fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 10 }}>ACTIVE</span>
@@ -104,13 +104,13 @@ function ProgrammeCard({ prog }: { prog: IncubatorProgramme }) {
               <span style={{ background: '#FAF3EB', color: '#C45A1A', fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 10 }}>PAUSED</span>
             )}
           </div>
-          <div style={{ fontFamily: 'Source Serif 4, Georgia, serif', fontSize: 15, fontWeight: 700, color: '#1A1A1A' }}>
+          <div style={{ fontFamily: 'Source Serif 4, Georgia, serif', fontSize: 15, fontWeight: 700, color: '#1A1A1A', overflowWrap: 'break-word' }}>
             {prog.programme_name}
           </div>
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <div style={{ minWidth: 0, maxWidth: '100%' }}>
           {prog.funding_amount_text && (
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{prog.funding_amount_text}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{prog.funding_amount_text}</div>
           )}
           {prog.duration_months && (
             <div style={{ fontSize: 11, color: '#9A9A94', marginTop: 2 }}>{prog.duration_months} months</div>
@@ -119,7 +119,7 @@ function ProgrammeCard({ prog }: { prog: IncubatorProgramme }) {
       </div>
 
       {prog.description && (
-        <p style={{ fontSize: 13, color: '#3D3830', lineHeight: 1.6, margin: '0 0 10px' }}>{prog.description}</p>
+        <p style={{ fontSize: 13, color: '#3D3830', lineHeight: 1.6, margin: '0 0 12px', overflowWrap: 'break-word' }}>{prog.description}</p>
       )}
 
       {/* Programme details grid */}
@@ -169,7 +169,7 @@ function ProgrammeCard({ prog }: { prog: IncubatorProgramme }) {
 
       {/* Eligibility */}
       {prog.eligibility_criteria && (
-        <div style={{ background: '#FAF9F6', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: '#5C5650', lineHeight: 1.5, marginBottom: 8 }}>
+        <div style={{ background: '#FAF9F6', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: '#5C5650', lineHeight: 1.5, marginBottom: 8, overflowWrap: 'break-word' }}>
           <strong style={{ color: '#3D3830' }}>Eligibility: </strong>{prog.eligibility_criteria}
         </div>
       )}
@@ -205,7 +205,7 @@ function CohortEntry({ cohort, programmeName }: { cohort: IncubatorCohort; progr
   const meta = [cohort.cohort_period, cohort.cohort_year].filter(Boolean).join(' · ')
 
   return (
-    <div style={{ border: '1px solid #DDD8F0', borderLeft: '3px solid #6B4C9A', borderRadius: 8, padding: '16px 18px', marginBottom: 10, background: '#FDFCFF' }}>
+    <div style={{ border: '1px solid #E5E5E5', borderLeft: '3px solid #6B4C9A', borderRadius: 8, padding: '20px 24px', marginBottom: 16, background: '#FFFFFF', width: '100%', boxSizing: 'border-box', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
       {/* Header row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
         <div>
