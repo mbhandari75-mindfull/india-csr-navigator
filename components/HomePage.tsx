@@ -164,7 +164,8 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend }: Props)
       <nav style={{ background: S.white, borderBottom: `2px solid ${S.ink}`, position: 'sticky', top: 0, zIndex: 40 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 0 }}>
           <div style={{ display: 'flex', gap: 0, alignItems: 'center' }}>
-            {tabs.map(t => (
+            {/* CSR Overview first */}
+            {tabs.slice(0, 1).map(t => (
               <button key={t.id} onClick={() => handleTabChange(t.id)} style={{
                 padding: '11px 18px', fontSize: 12, fontWeight: tab === t.id ? 600 : 400,
                 color: tab === t.id ? S.ink : S.muted,
@@ -176,6 +177,7 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend }: Props)
                 {t.label}
               </button>
             ))}
+            {/* External section tabs: Open Grants → Incubators */}
             <a href="/grants" style={{
               padding: '11px 18px', fontSize: 12, fontWeight: 400,
               color: S.muted,
@@ -188,6 +190,31 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend }: Props)
               Open Grants
               <span style={{ background: '#EA580C', color: '#FFFFFF', fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.2 }}>NEW</span>
             </a>
+            <a href="/incubators" style={{
+              padding: '11px 18px', fontSize: 12, fontWeight: 400,
+              color: S.muted,
+              textDecoration: 'none', whiteSpace: 'nowrap',
+              letterSpacing: '0.02em',
+              display: 'flex', alignItems: 'center', gap: 6,
+              borderBottom: '3px solid transparent',
+              marginBottom: -2,
+            }}>
+              Incubators
+              <span style={{ background: '#EA580C', color: '#FFFFFF', fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.2 }}>NEW</span>
+            </a>
+            {/* Remaining tabs: CSR Match, Foundations, Sectors, etc. */}
+            {tabs.slice(1).map(t => (
+              <button key={t.id} onClick={() => handleTabChange(t.id)} style={{
+                padding: '11px 18px', fontSize: 12, fontWeight: tab === t.id ? 600 : 400,
+                color: tab === t.id ? S.ink : S.muted,
+                background: 'none', border: 'none',
+                borderBottom: tab === t.id ? `3px solid ${S.saffron}` : '3px solid transparent',
+                cursor: 'pointer', transition: 'all 0.12s', whiteSpace: 'nowrap',
+                marginBottom: -2, letterSpacing: '0.02em',
+              }}>
+                {t.label}
+              </button>
+            ))}
           </div>
         </div>
       </nav>
