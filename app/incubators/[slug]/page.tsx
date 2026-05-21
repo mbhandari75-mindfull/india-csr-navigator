@@ -4,11 +4,18 @@ import Link from 'next/link'
 
 export const revalidate = 3600
 
-// Some DB text[] columns come back as comma-separated strings — normalise to array
+// General array normaliser — splits on commas (for sectors, partners, etc.)
 function toArr(val: string[] | string | null | undefined): string[] {
   if (!val) return []
   if (Array.isArray(val)) return val
   return String(val).split(/,\s*/).filter(Boolean)
+}
+
+// Winners are stored as semicolon-separated text (entries contain commas internally)
+function splitWinners(val: string[] | string | null | undefined): string[] {
+  if (!val) return []
+  if (Array.isArray(val)) return val.map(s => s.trim()).filter(Boolean)
+  return String(val).split(/;\s*/).map(s => s.trim()).filter(Boolean)
 }
 
 export async function generateStaticParams() {
@@ -69,9 +76,9 @@ function SectionHeading({ title }: { title: string }) {
 
 function MetricCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div style={{ background: '#FAF9F6', borderRadius: 8, padding: '14px 16px', flex: 1, minWidth: 120 }}>
+    <div style={{ background: '#FAF9F6', borderRadius: 8, padding: '14px 16px', flex: '1 1 140px', minWidth: 140 }}>
       <div style={{ fontSize: 10, color: '#9A9A94', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 700, color: '#1A1A1A', lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: '#1A1A1A', lineHeight: 1.3, overflowWrap: 'break-word', wordBreak: 'break-word' }}>{value}</div>
       {sub && <div style={{ fontSize: 11, color: '#9A9A94', marginTop: 3 }}>{sub}</div>}
     </div>
   )
@@ -194,53 +201,58 @@ function ProgrammeCard({ prog }: { prog: IncubatorProgramme }) {
 // ─── cohort entry ─────────────────────────────────────────────────────────────
 
 function CohortEntry({ cohort, programmeName }: { cohort: IncubatorCohort; programmeName: string }) {
+  const winners = splitWinners(cohort.notable_winners)
+  const meta = [cohort.cohort_period, cohort.cohort_year].filter(Boolean).join(' · ')
+
   return (
-    <div style={{ border: '1px solid #E8E4DF', borderLeft: '3px solid #6B4C9A', borderRadius: 8, padding: '14px 16px', marginBottom: 8, background: '#FDFCFF' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 6, flexWrap: 'wrap' }}>
+    <div style={{ border: '1px solid #DDD8F0', borderLeft: '3px solid #6B4C9A', borderRadius: 8, padding: '16px 18px', marginBottom: 10, background: '#FDFCFF' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontFamily: 'Source Serif 4, Georgia, serif', fontSize: 14, fontWeight: 700, color: '#1A1A1A' }}>
+          <div style={{ fontFamily: 'Source Serif 4, Georgia, serif', fontSize: 15, fontWeight: 700, color: '#1A1A1A', lineHeight: 1.3 }}>
             {cohort.cohort_name || `${programmeName} ${cohort.cohort_year || ''}`}
           </div>
-          <div style={{ fontSize: 11, color: '#9A9A94', marginTop: 2 }}>
-            {[cohort.cohort_period, cohort.cohort_year].filter(Boolean).join(' · ')}
-            {' · '}{programmeName}
+          <div style={{ fontSize: 11, color: '#9A9A94', marginTop: 3 }}>
+            {meta && <span>{meta} · </span>}{programmeName}
           </div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           {cohort.number_of_winners != null && (
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 15, fontWeight: 700, color: '#6B4C9A' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 14, fontWeight: 700, color: '#6B4C9A' }}>
               {cohort.number_of_winners}
               <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, color: '#9A9A94', fontSize: 11 }}> winners</span>
             </div>
           )}
           {cohort.total_funding_text && (
-            <div style={{ fontSize: 11, color: '#9A9A94', marginTop: 1 }}>{cohort.total_funding_text}</div>
+            <div style={{ fontSize: 11, color: '#9A9A94', marginTop: 2 }}>{cohort.total_funding_text}</div>
           )}
         </div>
       </div>
 
       {cohort.description && (
-        <p style={{ fontSize: 12, color: '#5C5650', lineHeight: 1.5, margin: '0 0 8px' }}>{cohort.description}</p>
+        <p style={{ fontSize: 13, color: '#5C5650', lineHeight: 1.6, margin: '0 0 12px' }}>{cohort.description}</p>
       )}
 
-      {/* Notable winners — most valuable data */}
-      {toArr(cohort.notable_winners).length > 0 && (
-        <div>
-          <div style={{ fontSize: 10, color: '#6B4C9A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-            Winners
-          </div>
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {toArr(cohort.notable_winners).map((w, i) => (
-              <span key={i} style={{ background: '#F3EEF9', color: '#6B4C9A', fontSize: 11, fontWeight: 500, padding: '3px 9px', borderRadius: 12 }}>
+      {/* Winners list — each on its own line */}
+      <div>
+        <div style={{ fontSize: 10, color: '#6B4C9A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+          Winners
+        </div>
+        {winners.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {winners.map((w, i) => (
+              <div key={i} style={{ background: '#F3EEF9', color: '#4A3570', fontSize: 12, fontWeight: 500, padding: '7px 12px', borderRadius: 6, lineHeight: 1.45 }}>
                 {w}
-              </span>
+              </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div style={{ fontSize: 12, color: '#B0A8C8', fontStyle: 'italic' }}>Winners not yet documented</div>
+        )}
+      </div>
 
       {cohort.source_url && (
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginTop: 10 }}>
           <a href={cohort.source_url} target="_blank" rel="noreferrer noopener"
             style={{ fontSize: 11, color: '#9A9A94', textDecoration: 'none' }}>
             Source →
@@ -380,7 +392,7 @@ export default async function IncubatorDetailPage({ params }: { params: Promise<
             {hasMetrics && (
               <div style={{ background: '#FFFFFF', border: '1px solid #E8E4DF', borderRadius: 10, padding: '20px 22px' }}>
                 <SectionHeading title="Impact" />
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
                   {incubator.total_startups_supported != null && (
                     <MetricCard label="Startups supported" value={incubator.total_startups_supported.toLocaleString()} />
                   )}

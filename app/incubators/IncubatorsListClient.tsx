@@ -121,12 +121,6 @@ function IncubatorCard({ inc, programmeCount }: { inc: Incubator; programmeCount
 
 // ─── main ───────────────────────────────────────────────────────────────────
 
-const ALL_SECTORS = [
-  'Agriculture', 'Climate & Environment', 'Education', 'Energy', 'Finance & Fintech',
-  'Food & Nutrition', 'Gender & Women', 'Health & Sanitation', 'Livelihoods',
-  'Rural Development', 'Skill Development', 'Social Entrepreneurship', 'Technology for Good', 'Water & Sanitation',
-]
-
 const ALL_TYPES = Object.entries(INCUBATOR_TYPE_STYLES).map(([id, s]) => ({ id, label: s.label }))
 
 export default function IncubatorsListClient({
@@ -141,6 +135,13 @@ export default function IncubatorsListClient({
   const [locationFilter, setLocationFilter] = useState('')
   const [appModelFilter, setAppModelFilter] = useState('')
   const [sortBy, setSortBy] = useState<'name' | 'year' | 'supported'>('name')
+
+  // Build sector list from actual data — only sectors present in ≥1 incubator
+  const availableSectors = useMemo(() => {
+    const set = new Set<string>()
+    incubators.forEach(inc => toArr(inc.sectors).forEach(s => set.add(s)))
+    return Array.from(set).sort()
+  }, [incubators])
 
   const applicationModels = useMemo(() => {
     const models = new Set(incubators.map(i => i.application_model).filter(Boolean) as string[])
@@ -193,7 +194,7 @@ export default function IncubatorsListClient({
           style={{ ...S.selectBase, color: sectorFilter ? '#1A1A1A' : '#9A9A94' }}
         >
           <option value="">All sectors</option>
-          {ALL_SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+          {availableSectors.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
 
         <select

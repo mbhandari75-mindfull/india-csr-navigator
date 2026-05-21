@@ -9,18 +9,38 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+export interface BannerCounts {
+  grantsOpen: number
+  grantsUpcoming: number
+  incubatorOrgs: number
+  incubatorProgrammes: number
+  incubatorCohorts: number
+}
+
 export default function ClientApp() {
   const [orgs, setOrgs] = useState<any[]>([])
   const [focusAreas, setFocusAreas] = useState<any[]>([])
+  const [bannerCounts, setBannerCounts] = useState<BannerCounts>({ grantsOpen: 0, grantsUpcoming: 0, incubatorOrgs: 0, incubatorProgrammes: 0, incubatorCohorts: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
       try {
-        const [{ data: orgsData, error: orgsErr }, { data: faData, error: faErr }] = await Promise.all([
+        const [
+          { data: orgsData, error: orgsErr },
+          { data: faData, error: faErr },
+          { data: grants },
+          { data: incOrgs },
+          { data: incProgs },
+          { data: incCohorts },
+        ] = await Promise.all([
           supabase.from('orgs_with_focus').select('*').order('spend_max_cr', { ascending: false }),
-          supabase.from('focus_areas').select('*').order('name')
+          supabase.from('focus_areas').select('*').order('name'),
+          supabase.from('active_grants').select('status').in('status', ['open', 'upcoming']),
+          supabase.from('incubators').select('id'),
+          supabase.from('incubator_programmes').select('id'),
+          supabase.from('incubator_cohorts').select('id, notable_winners'),
         ])
 
         if (orgsErr) throw new Error(orgsErr.message)
@@ -28,6 +48,16 @@ export default function ClientApp() {
 
         setOrgs(orgsData || [])
         setFocusAreas(faData || [])
+        setBannerCounts({
+          grantsOpen: (grants || []).filter(g => g.status === 'open').length,
+          grantsUpcoming: (grants || []).filter(g => g.status === 'upcoming').length,
+          incubatorOrgs: (incOrgs || []).length,
+          incubatorProgrammes: (incProgs || []).length,
+          incubatorCohorts: (incCohorts || []).filter(c => {
+            const w = c.notable_winners
+            return w && w !== '' && w !== '{}'
+          }).length,
+        })
       } catch (e: any) {
         setError(e.message)
       } finally {
@@ -41,7 +71,7 @@ export default function ClientApp() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf9f6' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 700, marginBottom: 12 }}>India CSR Navigator</div>
-        <div style={{ fontSize: 14, color: '#6b6b67' }}>Loading 35 foundations...</div>
+        <div style={{ fontSize: 14, color: '#6b6b67' }}>Loading foundations...</div>
       </div>
     </div>
   )
@@ -60,5 +90,5 @@ export default function ClientApp() {
 
   const totalSpend = Math.round(orgs.reduce((s, o) => s + ((o.spend_min_cr + o.spend_max_cr) / 2), 0))
 
-  return <HomePage initialOrgs={orgs} focusAreas={focusAreas} totalSpend={totalSpend} />
+  return <HomePage initialOrgs={orgs} focusAreas={focusAreas} totalSpend={totalSpend} bannerCounts={bannerCounts} />
 }

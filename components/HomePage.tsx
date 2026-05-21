@@ -12,10 +12,13 @@ import NGOTab from './NGOTab'
 
 type Tab = 'overview' | 'navigator' | 'directory' | 'focus' | 'ngos' | 'guide' | 'about'
 
+import { BannerCounts } from './ClientApp'
+
 interface Props {
   initialOrgs: any[]
   focusAreas: any[]
   totalSpend: number
+  bannerCounts: BannerCounts
 }
 
 const S = {
@@ -33,7 +36,7 @@ const S = {
   white: '#FFFFFF',
 }
 
-export default function HomePage({ initialOrgs, focusAreas, totalSpend }: Props) {
+export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCounts }: Props) {
   const [tab, setTab] = useState<Tab>('overview')
   const [activeFilter, setActiveFilter] = useState('all')
   const [fitFilter, setFitFilter] = useState('all')
@@ -219,16 +222,33 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend }: Props)
         </div>
       </nav>
 
-      {/* Open Grants banner strip — homepage only */}
+      {/* Grants + Incubators banner strip — homepage only */}
       {tab === 'overview' && (
-        <div style={{ background: '#FFFDF5', borderBottom: '1px solid #F0D5A0' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#1A5C2E', background: '#E8F4ED', padding: '2px 8px', borderRadius: 10, fontFamily: 'JetBrains Mono, monospace' }}>14 open</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#3B5998', background: '#EEF1F8', padding: '2px 8px', borderRadius: 10, fontFamily: 'JetBrains Mono, monospace' }}>1 upcoming</span>
-            <span style={{ fontSize: 13, color: '#5C5650' }}>14 grants open · 1 upcoming — CSR funding for NGOs and social enterprises.</span>
-            <a href="/grants" style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, color: '#E07A2F', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-              View all open grants →
-            </a>
+        <div style={{ borderBottom: '1px solid #E8E4DF' }}>
+          {/* Grants row */}
+          <div style={{ background: '#FFFDF5', borderBottom: '1px solid #F0D5A0' }}>
+            <div style={{ maxWidth: 1200, margin: '0 auto', padding: '9px 24px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#5C5650', letterSpacing: '0.01em' }}>Grants —</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#1A5C2E', background: '#E8F4ED', padding: '2px 8px', borderRadius: 10, fontFamily: 'JetBrains Mono, monospace' }}>{bannerCounts.grantsOpen} open</span>
+              {bannerCounts.grantsUpcoming > 0 && (
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#3B5998', background: '#EEF1F8', padding: '2px 8px', borderRadius: 10, fontFamily: 'JetBrains Mono, monospace' }}>{bannerCounts.grantsUpcoming} upcoming</span>
+              )}
+              <a href="/grants" style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, color: '#E07A2F', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                View all →
+              </a>
+            </div>
+          </div>
+          {/* Incubators row */}
+          <div style={{ background: '#FDFCFF' }}>
+            <div style={{ maxWidth: 1200, margin: '0 auto', padding: '9px 24px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#5C5650', letterSpacing: '0.01em' }}>Incubators —</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#6B4C9A', background: '#F3EEF9', padding: '2px 8px', borderRadius: 10, fontFamily: 'JetBrains Mono, monospace' }}>{bannerCounts.incubatorOrgs} organisations</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#3B5998', background: '#EEF1F8', padding: '2px 8px', borderRadius: 10, fontFamily: 'JetBrains Mono, monospace' }}>{bannerCounts.incubatorProgrammes} programmes</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#1A5C2E', background: '#E8F4ED', padding: '2px 8px', borderRadius: 10, fontFamily: 'JetBrains Mono, monospace' }}>{bannerCounts.incubatorCohorts} cohorts with named winners</span>
+              <a href="/incubators" style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, color: '#6B4C9A', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                View all →
+              </a>
+            </div>
           </div>
         </div>
       )}
