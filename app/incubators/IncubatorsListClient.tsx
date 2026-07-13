@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
+import { usePostHog } from 'posthog-js/react'
 import { Incubator } from '@/lib/supabase-server'
 
 function toArr(val: string[] | string | null | undefined): string[] {
@@ -130,11 +131,20 @@ export default function IncubatorsListClient({
   incubators: Incubator[]
   programmesPerIncubator: Record<string, number>
 }) {
+  const posthog = usePostHog()
   const [typeFilter, setTypeFilter] = useState('')
   const [sectorFilter, setSectorFilter] = useState('')
   const [locationFilter, setLocationFilter] = useState('')
   const [appModelFilter, setAppModelFilter] = useState('')
   const [sortBy, setSortBy] = useState<'name' | 'year' | 'supported'>('name')
+
+  useEffect(() => {
+    posthog?.capture('directory_viewed', { directory: 'incubators' })
+  }, [posthog])
+
+  function applyFilter(filterType: string, value: string) {
+    if (value) posthog?.capture('filter_applied', { filter_type: filterType, value })
+  }
 
   // Build sector list from actual data — only sectors present in ≥1 incubator
   const availableSectors = useMemo(() => {
@@ -181,7 +191,7 @@ export default function IncubatorsListClient({
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <select
           value={typeFilter}
-          onChange={e => setTypeFilter(e.target.value)}
+          onChange={e => { setTypeFilter(e.target.value); applyFilter('incubator_type', e.target.value) }}
           style={{ ...S.selectBase, color: typeFilter ? '#1A1A1A' : '#9A9A94' }}
         >
           <option value="">All types</option>
@@ -190,7 +200,7 @@ export default function IncubatorsListClient({
 
         <select
           value={sectorFilter}
-          onChange={e => setSectorFilter(e.target.value)}
+          onChange={e => { setSectorFilter(e.target.value); applyFilter('sector', e.target.value) }}
           style={{ ...S.selectBase, color: sectorFilter ? '#1A1A1A' : '#9A9A94' }}
         >
           <option value="">All sectors</option>
@@ -199,7 +209,7 @@ export default function IncubatorsListClient({
 
         <select
           value={locationFilter}
-          onChange={e => setLocationFilter(e.target.value)}
+          onChange={e => { setLocationFilter(e.target.value); applyFilter('location', e.target.value) }}
           style={{ ...S.selectBase, color: locationFilter ? '#1A1A1A' : '#9A9A94' }}
         >
           <option value="">Indian &amp; International</option>
@@ -210,7 +220,7 @@ export default function IncubatorsListClient({
         {applicationModels.length > 0 && (
           <select
             value={appModelFilter}
-            onChange={e => setAppModelFilter(e.target.value)}
+            onChange={e => { setAppModelFilter(e.target.value); applyFilter('application_model', e.target.value) }}
             style={{ ...S.selectBase, color: appModelFilter ? '#1A1A1A' : '#9A9A94' }}
           >
             <option value="">All application models</option>

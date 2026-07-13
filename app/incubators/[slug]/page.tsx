@@ -1,6 +1,7 @@
 import { createServerClient, Incubator, IncubatorProgramme, IncubatorCohort } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import TrackDetailView from '@/components/TrackDetailView'
 
 export const revalidate = 3600
 
@@ -297,6 +298,7 @@ export default async function IncubatorDetailPage({ params }: { params: Promise<
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAF9F6', fontFamily: 'Inter, sans-serif' }}>
+      <TrackDetailView entityType="incubator" slug={slug} />
       {/* NAV */}
       <div style={{ background: '#1A1A1A' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 16, height: 52, flexWrap: 'wrap' }}>
@@ -360,7 +362,7 @@ export default async function IncubatorDetailPage({ params }: { params: Promise<
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.7fr) minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
+        <div className="detail-split" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.7fr) minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
 
           {/* LEFT COLUMN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

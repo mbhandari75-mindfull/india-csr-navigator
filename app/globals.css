@@ -55,3 +55,71 @@ body {
 .sector-women       { background: #F9EEF2; color: #B44D6E; border-color: #DFB0BF; }
 .sector-wash        { background: #F3EEF9; color: #6B4C9A; border-color: #C8B8E4; }
 .sector-mhm         { background: #FFF0E8; color: #C45A1A; border-color: #F0C0A0; }
+
+/* ── Mobile collapse (≤720px) — targeted BLOCKER fixes only.
+   Desktop layout above 720px is untouched. !important is required to
+   override component inline styles inside this breakpoint. ── */
+@media (max-width: 720px) {
+  /* 2. Foundations directory table → stacked single-column cards */
+  .dir-table-header { display: none !important; }
+  .dir-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+
+  /* 3. CSR Match results table → stacked rows (Type/Focus fold under name) */
+  .match-table-header { display: none !important; }
+  .match-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+
+  /* 4. CSR Overview state breakdown → two-row layout
+        line 1: name + amount · line 2: bar + growth */
+  .state-row { grid-template-columns: 1fr auto !important; }
+  .state-row > *:nth-child(1) { grid-column: 1 !important; grid-row: 1 !important; }
+  .state-row > *:nth-child(3) { grid-column: 2 !important; grid-row: 1 !important; }
+  .state-row > *:nth-child(2) { grid-column: 1 !important; grid-row: 2 !important; }
+  .state-row > *:nth-child(4) { grid-column: 2 !important; grid-row: 2 !important; }
+
+  /* 5. Sectors selected-sector split → single column (detail stacks under list) */
+  .focus-split { grid-template-columns: 1fr !important; }
+
+  /* 6. NGO Profiles selected-NGO split → single column */
+  .ngo-split { grid-template-columns: 1fr !important; }
+  /* NGO detail → centered fixed modal overlay (mirror OrgModal) on mobile,
+     so a tap gives immediate feedback instead of opening below the long list */
+  .ngo-modal-backdrop {
+    display: block !important;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 50;
+  }
+  .ngo-detail-panel {
+    position: fixed !important;
+    top: 24px !important; left: 16px !important; right: 16px !important; bottom: 24px !important;
+    width: auto !important; max-width: 460px; margin: 0 auto;
+    overflow-y: auto; z-index: 51;
+    box-shadow: 0 8px 48px rgba(0,0,0,0.3) !important;
+  }
+
+  /* Grant/Incubator detail body → single column
+     (main content first, "At a glance"/links panels stack full-width below) */
+  .detail-split { grid-template-columns: 1fr !important; }
+
+  /* 2. Home masthead → stack the space-between rows full-width */
+  .masthead-topbar { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; }
+  .masthead-meta { flex-wrap: wrap !important; }
+  .masthead-title { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
+  .masthead-search-input { width: 100% !important; }
+
+  /* 3. Open Grants card top row → stack (title full width, deadline below left) */
+  .grant-card-toprow { flex-direction: column !important; }
+  .grant-card-deadline, .grant-card-deadline div { text-align: left !important; }
+}
+
+/* NGO modal backdrop is mobile-only; hidden on desktop (side-panel layout) */
+.ngo-modal-backdrop { display: none; }

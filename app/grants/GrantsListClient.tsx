@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
+import { usePostHog } from 'posthog-js/react'
 import { focusStyle } from '@/lib/colours'
 import { ActiveGrant } from '@/lib/supabase-server'
 
@@ -67,11 +68,7 @@ function GrantCard({ g, dim = false }: { g: ActiveGrant; dim?: boolean }) {
   const orgName = g.organisations?.name || '—'
   const isFeatured = g.is_featured && !dim
 
-  return (
-    <Link
-      href={`/grants/${g.programme_slug}`}
-      style={{ textDecoration: 'none', display: 'block' }}
-    >
+  const cardBody = (
       <div style={{
         background: dim ? '#F5F3EE' : isFeatured ? '#FFFDF8' : '#FFFFFF',
         border: `1px solid ${dim ? '#E0DDD4' : isFeatured ? '#F0D5A0' : '#E8E4DF'}`,
@@ -86,7 +83,7 @@ function GrantCard({ g, dim = false }: { g: ActiveGrant; dim?: boolean }) {
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = dim ? '#E0DDD4' : isFeatured ? '#F0D5A0' : '#E8E4DF' }}
       >
         {/* Top row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 6, flexWrap: 'wrap' }}>
+        <div className="grant-card-toprow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 6, flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 3 }}>
               {g.status === 'upcoming' && (
@@ -105,7 +102,7 @@ function GrantCard({ g, dim = false }: { g: ActiveGrant; dim?: boolean }) {
             <div style={{ fontSize: 12, color: '#9A9A94', marginTop: 2 }}>{orgName}</div>
           </div>
           {/* Deadline */}
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div className="grant-card-deadline" style={{ textAlign: 'right', flexShrink: 0 }}>
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600, color: dim ? '#9A9A94' : '#1A1A1A' }}>{deadline}</div>
             {g.grant_size_text && (
               <div style={{ fontSize: 11, color: '#9A9A94', marginTop: 1, maxWidth: 180, textAlign: 'right' }}>{g.grant_size_text}</div>
@@ -134,6 +131,17 @@ function GrantCard({ g, dim = false }: { g: ActiveGrant; dim?: boolean }) {
           )}
         </div>
       </div>
+  )
+
+  // Guard: a grant without a slug must not link to /grants/undefined.
+  if (!g.programme_slug) return cardBody
+
+  return (
+    <Link
+      href={`/grants/${g.programme_slug}`}
+      style={{ textDecoration: 'none', display: 'block' }}
+    >
+      {cardBody}
     </Link>
   )
 }
@@ -148,9 +156,18 @@ const ALL_FOCUS_AREAS = [
 ]
 
 export default function GrantsListClient({ open, closed }: { open: ActiveGrant[]; closed: ActiveGrant[] }) {
+  const posthog = usePostHog()
   const [entityFilter, setEntityFilter] = useState('')
   const [focusFilter, setFocusFilter] = useState('')
   const [urgencyFilter, setUrgencyFilter] = useState('')
+
+  useEffect(() => {
+    posthog?.capture('directory_viewed', { directory: 'grants' })
+  }, [posthog])
+
+  function applyFilter(filterType: string, value: string) {
+    if (value) posthog?.capture('filter_applied', { filter_type: filterType, value })
+  }
 
   const filtered = useMemo(() => {
     return open.filter(g => {
@@ -182,7 +199,7 @@ export default function GrantsListClient({ open, closed }: { open: ActiveGrant[]
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <select
           value={entityFilter}
-          onChange={e => setEntityFilter(e.target.value)}
+          onChange={e => { setEntityFilter(e.target.value); applyFilter('entity_type', e.target.value) }}
           style={{ ...S.selectBase, color: entityFilter ? '#1A1A1A' : '#9A9A94' }}
         >
           <option value="">All entity types</option>
@@ -191,7 +208,7 @@ export default function GrantsListClient({ open, closed }: { open: ActiveGrant[]
 
         <select
           value={focusFilter}
-          onChange={e => setFocusFilter(e.target.value)}
+          onChange={e => { setFocusFilter(e.target.value); applyFilter('focus_area', e.target.value) }}
           style={{ ...S.selectBase, color: focusFilter ? '#1A1A1A' : '#9A9A94' }}
         >
           <option value="">All focus areas</option>
@@ -200,7 +217,7 @@ export default function GrantsListClient({ open, closed }: { open: ActiveGrant[]
 
         <select
           value={urgencyFilter}
-          onChange={e => setUrgencyFilter(e.target.value)}
+          onChange={e => { setUrgencyFilter(e.target.value); applyFilter('deadline', e.target.value) }}
           style={{ ...S.selectBase, color: urgencyFilter ? '#1A1A1A' : '#9A9A94' }}
         >
           <option value="">All deadlines</option>

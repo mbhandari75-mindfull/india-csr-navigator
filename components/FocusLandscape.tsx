@@ -30,7 +30,7 @@ export default function FocusLandscape({ focusAreas, orgs, onSelect }: Props) {
         <p style={{ fontSize: 13, color: '#6b6b67', margin: '6px 0 0' }}>Click any focus area to see all foundations active in it</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: active ? '340px 1fr' : '1fr', gap: 16, alignItems: 'start' }}>
+      <div className="focus-split" style={{ display: 'grid', gridTemplateColumns: active ? '340px 1fr' : '1fr', gap: 16, alignItems: 'start' }}>
         {/* Focus area list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1, border: '1px solid #e0ddd4', borderRadius: 6, overflow: 'hidden', background: '#e0ddd4' }}>
           {totalBySector.map(fa => {

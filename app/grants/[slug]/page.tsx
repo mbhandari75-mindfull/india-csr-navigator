@@ -2,6 +2,7 @@ import { createServerClient, ActiveGrant } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { focusStyle } from '@/lib/colours'
+import TrackDetailView from '@/components/TrackDetailView'
 
 export const revalidate = 3600
 
@@ -90,6 +91,7 @@ export default async function GrantDetailPage({ params }: { params: Promise<{ sl
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAF9F6', fontFamily: 'Inter, sans-serif' }}>
+      <TrackDetailView entityType="grant" slug={slug} />
       {/* NAV */}
       <div style={{ background: '#1A1A1A' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 16, height: 52, flexWrap: 'wrap' }}>
@@ -231,7 +233,7 @@ export default async function GrantDetailPage({ params }: { params: Promise<{ sl
         </div>
 
         {/* DETAIL COLUMNS */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.6fr) minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
+        <div className="detail-split" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.6fr) minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
 
           {/* LEFT: Eligibility + grant details */}
           <div style={{ background: '#FFFFFF', border: '1px solid #E8E4DF', borderRadius: 10, padding: '20px 22px' }}>

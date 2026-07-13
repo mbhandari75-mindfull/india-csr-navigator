@@ -57,6 +57,17 @@ export default function NGOTab({ onSelectOrg, initialSelectedNGO, onNGOSelected 
     if (profile) { setSelected(profile); onNGOSelected?.() }
   }, [initialSelectedNGO, loading])
 
+  // On mobile (≤720px) the detail renders as a modal overlay — lock background
+  // scroll and enable Escape-to-close, matching OrgModal. Desktop is unaffected.
+  useEffect(() => {
+    if (!selected) return
+    if (!window.matchMedia('(max-width: 720px)').matches) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null) }
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
+  }, [selected])
+
   // Build NGO profiles from grants
   const ngoProfiles: Record<string, NGOProfile> = {}
   grants.forEach(g => {
@@ -118,7 +129,7 @@ export default function NGOTab({ onSelectOrg, initialSelectedNGO, onNGOSelected 
         <div style={{ marginLeft: 'auto', fontSize: 12, color: S.faint, alignSelf: 'center' }}>{filtered.length} NGOs shown</div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 380px' : '1fr', gap: 16, alignItems: 'start' }}>
+      <div className="ngo-split" style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 380px' : '1fr', gap: 16, alignItems: 'start' }}>
 
         {/* NGO cards grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
@@ -185,9 +196,12 @@ export default function NGOTab({ onSelectOrg, initialSelectedNGO, onNGOSelected 
           )}
         </div>
 
-        {/* NGO detail panel */}
+        {/* NGO detail — desktop: sticky side panel · mobile ≤720px: fixed modal overlay */}
         {selected && (
-          <div style={{ background: S.white, border: `1px solid ${S.border}`, borderRadius: 8, padding: '20px', position: 'sticky', top: 80, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+          <div className="ngo-modal-backdrop" onClick={() => setSelected(null)} />
+        )}
+        {selected && (
+          <div className="ngo-detail-panel" style={{ background: S.white, border: `1px solid ${S.border}`, borderRadius: 8, padding: '20px', position: 'sticky', top: 80, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
               <div>
                 <h3 style={{ fontFamily: 'Source Serif 4, Georgia, serif', fontSize: 18, fontWeight: 700, margin: '0 0 4px', color: S.ink }}>{selected.name}</h3>

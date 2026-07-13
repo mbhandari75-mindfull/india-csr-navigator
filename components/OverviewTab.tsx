@@ -304,7 +304,7 @@ export default function OverviewTab({ orgs, onTabChange }: Props) {
               const growth = Math.round(((s.fy24 - s.fy22) / s.fy22) * 100)
               const isSelected = selectedState === s.state
               return (
-                <button key={s.state} onClick={() => setSelectedState(isSelected ? null : s.state)} style={{
+                <button key={s.state} onClick={() => setSelectedState(isSelected ? null : s.state)} className="state-row" style={{
                   display: 'grid', gridTemplateColumns: '150px 1fr 90px 55px',
                   gap: 12, alignItems: 'center', padding: '9px 12px',
                   background: isSelected ? '#f5f3ee' : 'transparent',

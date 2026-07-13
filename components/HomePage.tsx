@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { track } from '@vercel/analytics'
+import { usePostHog } from 'posthog-js/react'
 import { scoreOrg, NGOProfile } from '@/lib/scoring'
 import { focusStyle, typeStyle, scoreColor, scoreLabel, NGO_SIZES, FOCUS_AREAS, INDIA_STATES } from '@/lib/colours'
 import { exportCSV, exportJSON } from '@/lib/export'
@@ -37,6 +39,8 @@ const S = {
 }
 
 export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCounts }: Props) {
+  const posthog = usePostHog()
+  const searchParams = useSearchParams()
   const [tab, setTab] = useState<Tab>('overview')
   const [activeFilter, setActiveFilter] = useState('all')
   const [fitFilter, setFitFilter] = useState('all')
@@ -85,9 +89,19 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
   const toggleFocus = (f: string) => setNgoFocus(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])
   const openOrg = useCallback((org: any) => {
     track('org_opened', { org_name: org.name, org_type: org.type })
+    posthog?.capture('funder_detail_viewed', { entity_type: 'foundation', slug: org.slug || String(org.id) })
     setSelectedOrg(org)
-  }, [])
+  }, [posthog])
   const closeOrg = useCallback(() => setSelectedOrg(null), [])
+
+  // Deep-link: /?org=<id|slug> opens the matching foundation modal on load
+  // (used by the Open Grants detail "foundation profile" links).
+  useEffect(() => {
+    const orgParam = searchParams.get('org')
+    if (!orgParam) return
+    const match = initialOrgs.find(o => String(o.id) === orgParam || o.slug === orgParam)
+    if (match) setSelectedOrg(match)
+  }, [searchParams, initialOrgs])
   const handleSelectNGO = useCallback((ngoName: string) => {
     setSelectedOrg(null)
     setSelectedNGOName(ngoName)
@@ -96,12 +110,14 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
   const handleFind = () => {
     if (ngoFocus.length) {
       track('match_run', { focus_areas: ngoFocus.join(', '), state: ngoState })
+      posthog?.capture('csr_match_run', {})
       setHasSearched(true)
     }
   }
   const handleReset = () => { setNgoFocus([]); setNgoSize(''); setGrantNeeded(''); setNgoState('Pan-India'); setHasSearched(false) }
   const handleTabChange = (tabId: Tab) => {
     track('tab_viewed', { tab: tabId })
+    if (tabId === 'directory') posthog?.capture('directory_viewed', { directory: 'foundations' })
     setTab(tabId)
   }
 
@@ -124,11 +140,11 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
       <header style={{ background: S.white, borderBottom: `1px solid ${S.border}` }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
           {/* Top bar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${S.border}` }}>
+          <div className="masthead-topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${S.border}` }}>
             <div style={{ fontSize: 10, letterSpacing: '0.16em', color: S.muted, textTransform: 'uppercase', fontWeight: 500 }}>
               An independent research initiative · India
             </div>
-            <div style={{ display: 'flex', gap: 16, fontSize: 10, color: S.muted, letterSpacing: '0.08em' }}>
+            <div className="masthead-meta" style={{ display: 'flex', gap: 16, fontSize: 10, color: S.muted, letterSpacing: '0.08em' }}>
               <span>{initialOrgs.length} foundations tracked</span>
               <span>·</span>
               <span>Updated May 2026</span>
@@ -138,7 +154,7 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
             </div>
           </div>
           {/* Title */}
-          <div style={{ padding: '18px 0 16px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
+          <div className="masthead-title" style={{ padding: '18px 0 16px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
             <div>
               <h1 style={{ fontFamily: 'Source Serif 4, Georgia, serif', fontSize: 'clamp(24px, 3.5vw, 38px)', fontWeight: 700, color: S.ink, letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>
                 India CSR Navigator
@@ -150,6 +166,7 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
               <input
                 type="text" placeholder="Search foundations…"
+                className="masthead-search-input"
                 value={search} onChange={e => {
                   const q = e.target.value
                   setSearch(q)
@@ -165,7 +182,7 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
 
       {/* Tab nav */}
       <nav style={{ background: S.white, borderBottom: `2px solid ${S.ink}`, position: 'sticky', top: 0, zIndex: 40 }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 0 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 0, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <div style={{ display: 'flex', gap: 0, alignItems: 'center' }}>
             {/* CSR Overview first */}
             {tabs.slice(0, 1).map(t => (
@@ -371,14 +388,14 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
                 {/* Remaining results table */}
                 {scoredOrgs.length > 3 && (
                   <div style={{ background: S.white, border: `1px solid ${S.border}`, borderRadius: 8, overflow: 'hidden' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 140px 160px 100px', gap: 12, padding: '10px 16px', borderBottom: `1px solid ${S.border}`, fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: S.muted, background: S.cream }}>
+                    <div className="match-table-header" style={{ display: 'grid', gridTemplateColumns: '60px 1fr 140px 160px 100px', gap: 12, padding: '10px 16px', borderBottom: `1px solid ${S.border}`, fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: S.muted, background: S.cream }}>
                       <span>Score</span><span>Foundation</span><span>Type</span><span>Focus Areas</span><span style={{ textAlign: 'right' }}>Spend</span>
                     </div>
                     {scoredOrgs.slice(3).map((org, i) => {
                       const ts = typeStyle(org.type)
                       const col = scoreColor(org._score)
                       return (
-                        <button key={org.id} onClick={() => openOrg(org)} style={{
+                        <button key={org.id} onClick={() => openOrg(org)} className="match-row" style={{
                           display: 'grid', gridTemplateColumns: '60px 1fr 140px 160px 100px', gap: 12,
                           alignItems: 'center', padding: '13px 16px', background: i % 2 === 0 ? S.white : S.cream,
                           border: 'none', borderBottom: `1px solid ${S.border}`, cursor: 'pointer', textAlign: 'left', width: '100%',
@@ -428,7 +445,7 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16, alignItems: 'center' }}>
               <input type="text" placeholder="Search foundations, parent companies, geographies…" value={dirSearch} onChange={e => setDirSearch(e.target.value)}
                 style={{ padding: '8px 12px', border: `1px solid ${S.border}`, borderRadius: 6, fontSize: 12, width: 280, background: S.white, outline: 'none' }} />
-              <select value={dirType} onChange={e => setDirType(e.target.value)} style={{ padding: '8px 12px', border: `1px solid ${S.border}`, borderRadius: 6, fontSize: 12, background: S.white, cursor: 'pointer' }}>
+              <select value={dirType} onChange={e => { setDirType(e.target.value); if (e.target.value !== 'all') posthog?.capture('filter_applied', { filter_type: 'org_type', value: e.target.value }) }} style={{ padding: '8px 12px', border: `1px solid ${S.border}`, borderRadius: 6, fontSize: 12, background: S.white, cursor: 'pointer' }}>
                 <option value="all">All types</option>
                 <option value="Corporate">Corporate</option>
                 <option value="Philanthropic">Philanthropic</option>
@@ -446,7 +463,7 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
                   const s = focusStyle(f)
                   const active = activeFilter === f
                   return (
-                    <button key={f} onClick={() => setActiveFilter(active ? 'all' : f)} style={{ padding: '6px 12px', borderRadius: 4, fontSize: 11, border: `1px solid ${active ? s.border : S.border}`, background: active ? s.bg : S.white, color: active ? s.text : S.muted, cursor: 'pointer', fontWeight: active ? 600 : 400 }}>{f}</button>
+                    <button key={f} onClick={() => { const next = active ? 'all' : f; setActiveFilter(next); if (next !== 'all') posthog?.capture('filter_applied', { filter_type: 'focus_area', value: f }) }} style={{ padding: '6px 12px', borderRadius: 4, fontSize: 11, border: `1px solid ${active ? s.border : S.border}`, background: active ? s.bg : S.white, color: active ? s.text : S.muted, cursor: 'pointer', fontWeight: active ? 600 : 400 }}>{f}</button>
                   )
                 })}
               </div>
@@ -454,13 +471,13 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
 
             {/* Dense table */}
             <div style={{ background: S.white, border: `1px solid ${S.border}`, borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 110px 160px 130px 80px 80px', gap: 12, padding: '10px 20px', borderBottom: `2px solid ${S.border}`, fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: S.muted, background: S.cream }}>
+              <div className="dir-table-header" style={{ display: 'grid', gridTemplateColumns: '2fr 110px 160px 130px 80px 80px', gap: 12, padding: '10px 20px', borderBottom: `2px solid ${S.border}`, fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: S.muted, background: S.cream }}>
                 <span>Foundation</span><span>Type</span><span>Annual spend</span><span>NGO preference</span><span style={{ textAlign: 'center' }}>Verified</span><span style={{ textAlign: 'right' }}>Score</span>
               </div>
               {directoryOrgs.map((org, i) => {
                 const ts = typeStyle(org.type)
                 return (
-                  <button key={org.id} onClick={() => openOrg(org)} style={{
+                  <button key={org.id} onClick={() => openOrg(org)} className="dir-row" style={{
                     display: 'grid', gridTemplateColumns: '2fr 110px 160px 130px 80px 80px', gap: 12,
                     alignItems: 'center', padding: '14px 20px',
                     background: i % 2 === 0 ? S.white : S.cream,
@@ -530,6 +547,7 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
 }
 
 function GuideSection() {
+  const posthog = usePostHog()
   const S2 = { ink: '#1A1A1A', muted: '#3D3830', faint: '#5C5650', border: '#E8E4DF', white: '#FFFFFF', cream: '#FAF7F2', creamWarm: '#FAF3EB', borderWarm: '#E8DDD0', saffron: '#E07A2F', teal: '#0D7377', moss: '#4A7C59', berry: '#B44D6E' }
   return (
     <div style={{ maxWidth: 760 }}>
@@ -590,6 +608,7 @@ function GuideSection() {
                   <div>· Anything else you want us to know</div>
                 </div>
                 <a href="https://docs.google.com/forms/d/e/1FAIpQLScdk0okeJEhiLCUuy72M1LamUBNIdKSYfPAbQGep2cd6Djzzg/viewform?usp=header" target="_blank" rel="noopener noreferrer"
+                  onClick={() => posthog?.capture('ngo_submission_started', {})}
                   style={{ display: 'block', background: S2.teal, color: S2.white, textAlign: 'center', padding: '10px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
                   Submit NGO Profile →
                 </a>

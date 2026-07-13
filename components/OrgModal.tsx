@@ -156,7 +156,6 @@ export default function OrgModal({ org, onClose, onSelectNGO }: Props) {
             ) : filteredGrants.length === 0 ? (
               <div style={{ background: '#f5f3ee', borderRadius: 6, padding: '16px', textAlign: 'center' }}>
                 <div style={{ fontSize: 13, color: '#2e2e2a' }}>No grant records yet for this foundation.</div>
-                <div style={{ fontSize: 11, color: '#6b6560', marginTop: 4 }}>Add grants via the admin panel at /admin</div>
               </div>
             ) : (() => {
               // Build multi-year map from ALL grants (for badge), display filteredGrants
