@@ -13,6 +13,7 @@ type AdminTab = 'grants' | 'orgs' | 'add-grant' | 'add-org'
 export default function AdminDashboard({ supabase, session }: Props) {
   const [tab, setTab] = useState<AdminTab>('grants')
   const [orgs, setOrgs] = useState<any[]>([])
+  const [ngos, setNgos] = useState<any[]>([])
   const [grants, setGrants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -21,11 +22,13 @@ export default function AdminDashboard({ supabase, session }: Props) {
 
   const loadData = async () => {
     setLoading(true)
-    const [{ data: orgsData }, { data: grantsData }] = await Promise.all([
+    const [{ data: orgsData }, { data: ngosData }, { data: grantsData }] = await Promise.all([
       supabase.from('organisations').select('id, name, type, spend_label').order('name'),
+      supabase.from('ngos').select('id, name, slug').order('name'),
       supabase.from('grants').select('*, organisations(name)').order('fiscal_year', { ascending: false })
     ])
     setOrgs(orgsData || [])
+    setNgos(ngosData || [])
     setGrants(grantsData || [])
     setLoading(false)
   }
@@ -89,7 +92,7 @@ export default function AdminDashboard({ supabase, session }: Props) {
           <>
             {tab === 'grants' && <GrantsList grants={grants} supabase={supabase} onRefresh={loadData} onMessage={showMessage} />}
             {tab === 'orgs' && <OrgsList orgs={orgs} supabase={supabase} onRefresh={loadData} onMessage={showMessage} />}
-            {tab === 'add-grant' && <GrantForm orgs={orgs} supabase={supabase} onSuccess={() => { loadData(); setTab('grants'); showMessage('success', 'Grant added successfully') }} onMessage={showMessage} />}
+            {tab === 'add-grant' && <GrantForm orgs={orgs} ngos={ngos} supabase={supabase} onSuccess={() => { loadData(); setTab('grants'); showMessage('success', 'Grant added successfully') }} onMessage={showMessage} />}
             {tab === 'add-org' && <OrgForm supabase={supabase} onSuccess={() => { loadData(); setTab('orgs'); showMessage('success', 'Organisation added successfully') }} onMessage={showMessage} />}
           </>
         )}
