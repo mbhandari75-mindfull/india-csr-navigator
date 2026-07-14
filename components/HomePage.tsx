@@ -46,7 +46,6 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
   const [fitFilter, setFitFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [selectedOrg, setSelectedOrg] = useState<any | null>(null)
-  const [selectedNGOName, setSelectedNGOName] = useState<string | null>(null)
   const [ngoFocus, setNgoFocus] = useState<string[]>([])
   const [ngoState, setNgoState] = useState('Pan-India')
   const [ngoSize, setNgoSize] = useState<string>('')
@@ -102,11 +101,14 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
     const match = initialOrgs.find(o => String(o.id) === orgParam || o.slug === orgParam)
     if (match) setSelectedOrg(match)
   }, [searchParams, initialOrgs])
-  const handleSelectNGO = useCallback((ngoName: string) => {
-    setSelectedOrg(null)
-    setSelectedNGOName(ngoName)
-    setTab('ngos')
-  }, [])
+
+  // Deep-link: /?tab=<tab> selects a tab on load (used by the NGO profile
+  // breadcrumb and back-link, which return to /?tab=ngos).
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    const valid: Tab[] = ['overview', 'navigator', 'directory', 'focus', 'ngos', 'guide', 'about']
+    if (tabParam && valid.includes(tabParam as Tab)) setTab(tabParam as Tab)
+  }, [searchParams])
   const handleFind = () => {
     if (ngoFocus.length) {
       track('match_run', { focus_areas: ngoFocus.join(', '), state: ngoState })
@@ -519,11 +521,11 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
         )}
 
         {tab === 'ngos' && (
-          <NGOTab onSelectOrg={openOrg} initialSelectedNGO={selectedNGOName} onNGOSelected={() => setSelectedNGOName(null)} />
+          <NGOTab />
         )}
 
-        {tab === 'guide' && <GuideSection />}
-        {tab === 'about' && <AboutSection />}
+        {tab === 'guide' && <GuideSection ngoCount={bannerCounts.ngos} />}
+        {tab === 'about' && <AboutSection ngoCount={bannerCounts.ngos} />}
 
       </main>
 
@@ -541,12 +543,12 @@ export default function HomePage({ initialOrgs, focusAreas, totalSpend, bannerCo
         </div>
       </footer>
 
-      {selectedOrg && <OrgModal org={selectedOrg} onClose={closeOrg} onSelectNGO={handleSelectNGO} />}
+      {selectedOrg && <OrgModal org={selectedOrg} onClose={closeOrg} />}
     </div>
   )
 }
 
-function GuideSection() {
+function GuideSection({ ngoCount }: { ngoCount: number }) {
   const posthog = usePostHog()
   const S2 = { ink: '#1A1A1A', muted: '#3D3830', faint: '#5C5650', border: '#E8E4DF', white: '#FFFFFF', cream: '#FAF7F2', creamWarm: '#FAF3EB', borderWarm: '#E8DDD0', saffron: '#E07A2F', teal: '#0D7377', moss: '#4A7C59', berry: '#B44D6E' }
   return (
@@ -568,7 +570,7 @@ function GuideSection() {
                 { n: 1, icon: '📊', heading: 'Start with CSR Overview', body: "See where India's ₹34,909 Cr CSR spend flows — by sector, by state, year on year. Understand which sectors are well-funded and which are underfunded before you start your search." },
                 { n: 2, icon: '🔍', heading: 'Run a CSR Match', body: 'Click CSR Match in the nav. Select your focus areas, set your geography and organisation size, then click Find Matching Foundations. Every foundation is scored on alignment. Start with the top 3.' },
                 { n: 3, icon: '📋', heading: 'Deep-dive into Foundations', body: 'Click any foundation card to open its full profile — focus areas, geography, grant size range, gender score, NGO size preference and contact details. This tells you exactly how to position your proposal.' },
-                { n: 4, icon: '🏢', heading: 'Browse NGO Profiles', body: 'See 329 NGOs with verified grant histories. Filter by focus area. Click any NGO to see which foundations funded them, how much and when. This shows you who is already in the room.' },
+                { n: 4, icon: '🏢', heading: 'Browse NGO Profiles', body: `See ${ngoCount} curated NGO profiles. Filter by focus area or funder. Open any NGO for its full profile — focus areas, registrations, leadership and documented funding history. This shows you who is already in the room.` },
                 { n: 5, icon: '🗺', heading: 'Explore by Sector', body: 'Use the Sectors tab to see all foundations funding a specific cause. Useful if you know your sector but not which foundations to target.' },
               ].map(step => (
                 <div key={step.n} style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
@@ -666,7 +668,7 @@ function GuideSection() {
   )
 }
 
-function AboutSection() {
+function AboutSection({ ngoCount }: { ngoCount: number }) {
   const S2 = { ink: '#1A1A1A', muted: '#3D3830', faint: '#3D3830', border: '#E8E4DF', white: '#FFFFFF', cream: '#FAF7F2', creamWarm: '#FAF3EB', borderWarm: '#E8DDD0', saffron: '#E07A2F', teal: '#0D7377', moss: '#4A7C59' }
   return (
     <div style={{ maxWidth: 760 }}>
@@ -759,7 +761,7 @@ function AboutSection() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             {[
               { stat: '101', label: 'Foundations tracked', sub: '50 Corporate · 10 PSU · 9 Philanthropic · 2 International' },
-              { stat: '329', label: 'Unique NGOs documented', sub: 'Derived from 476 verified grant records' },
+              { stat: String(ngoCount), label: 'Curated NGO profiles', sub: 'Individually researched and verified' },
               { stat: '~56%', label: 'Of India CSR spend covered', sub: '₹19,500 Cr estimated annual spend across tracked foundations' },
               { stat: '25.5%', label: 'Of India CSR grant-documented', sub: '₹8,894 Cr in individually verified grant records' },
             ].map(s => (

@@ -7,7 +7,7 @@ export default function TrackDetailView({
   entityType,
   slug,
 }: {
-  entityType: 'grant' | 'incubator'
+  entityType: 'grant' | 'incubator' | 'ngo'
   slug: string
 }) {
   const posthog = usePostHog()

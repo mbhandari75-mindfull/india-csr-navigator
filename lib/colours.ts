@@ -42,6 +42,23 @@ export function scoreLabel(score: number): string {
   return 'Weak match'
 }
 
+// Size bands stored on ngos.size_band. Distinct from NGO_SIZES below, which is
+// the self-reported vocabulary used by the funder-match form — the two overlap
+// only on the word "established" and are not interchangeable.
+export const SIZE_BANDS: Record<string, { label: string; range: string }> = {
+  early_stage: { label: 'Early-stage', range: 'Under ₹50L' },
+  emerging:    { label: 'Emerging',    range: '₹50L–₹2Cr' },
+  growth:      { label: 'Growth',      range: '₹2Cr–₹10Cr' },
+  established: { label: 'Established', range: '₹10Cr–₹100Cr' },
+  large_scale: { label: 'Large-scale', range: 'Over ₹100Cr' },
+}
+
+export function sizeBandLabel(band: string | null | undefined): string | null {
+  if (!band) return null
+  const b = SIZE_BANDS[band]
+  return b ? `${b.label} (${b.range})` : null
+}
+
 export const NGO_SIZES = [
   { value: 'grassroots', label: 'Grassroots', budget: 'Under ₹25L/yr', years: 'Under 3 years', description: 'Early-stage, community-based' },
   { value: 'growing',    label: 'Growing',    budget: '₹25L – ₹1Cr/yr', years: '3–7 years', description: 'Building systems and scale' },

@@ -10,6 +10,59 @@ export function createServerClient() {
   )
 }
 
+export interface Ngo {
+  id: string
+  name: string
+  slug: string
+  website: string | null
+  description: string | null
+  states: string[] | null
+  verified: boolean
+  founded: number | null
+  year_founded: number | null
+  founder_name: string | null
+  founder_linkedin: string | null
+  contact_name: string | null
+  contact_email: string | null
+  contact_linkedin: string | null
+  awards: string | null
+  awards_recognition: string | null
+  govt_partnerships: string | null
+  validity_signals: string | null
+  annual_report_url: string | null
+  funding_model: string | null
+  fcra_registered: boolean | null
+  has_12a: boolean | null
+  has_80g: boolean | null
+  has_csr1: boolean | null
+  darpan_id: string | null
+  pan: string | null
+  csr_registration_number: string | null
+  legal_structure: string | null
+  size_band: string | null
+  annual_budget_lakhs: number | null
+  data_quality: string | null
+  source: string | null
+  notes: string | null
+  ngo_focus_areas?: { focus_areas: { name: string } | null }[]
+}
+
+// A historical grant record from `grants`, linked to its recipient NGO by
+// grants.ngo_id and to its funder by grants.org_id -> organisations.
+export interface NgoGrant {
+  id: string
+  ngo_id: string | null
+  org_id: string | null
+  amount_lakhs: number | null
+  fiscal_year: string | null
+  programme: string | null
+  focus_area: string | null
+  state: string | null
+  source_url: string | null
+  verified: boolean | null
+  organisations: { id: string; name: string; type: string | null } | null
+}
+
 export interface Incubator {
   id: string
   name: string

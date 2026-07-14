@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { focusStyle, typeStyle } from '@/lib/colours'
 
@@ -9,9 +10,9 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-interface Props { org: any; onClose: () => void; onSelectNGO?: (ngoName: string) => void }
+interface Props { org: any; onClose: () => void }
 
-export default function OrgModal({ org, onClose, onSelectNGO }: Props) {
+export default function OrgModal({ org, onClose }: Props) {
   const ts = typeStyle(org.type)
   const avgSpend = Math.round((org.spend_min_cr + org.spend_max_cr) / 2)
   const [grants, setGrants] = useState<any[]>([])
@@ -30,7 +31,7 @@ export default function OrgModal({ org, onClose, onSelectNGO }: Props) {
       setGrantsLoading(true)
       const { data } = await supabase
         .from('grants')
-        .select('*')
+        .select('*, ngos(slug, name)')
         .eq('org_id', org.id)
         .order('fiscal_year', { ascending: false })
       setGrants(data || [])
@@ -167,31 +168,41 @@ export default function OrgModal({ org, onClose, onSelectNGO }: Props) {
               // Group filteredGrants by NGO name
               const ngoMap: Record<string, any> = {}
               filteredGrants.forEach(g => {
-                if (!ngoMap[g.ngo_name]) ngoMap[g.ngo_name] = { name: g.ngo_name, grants: [], total: 0 }
+                if (!ngoMap[g.ngo_name]) {
+                  // Prefer the curated ngos row (reached via grants.ngo_id) for the
+                  // display name and the profile link; ngo_name is free text and
+                  // is often an abbreviation of the real name.
+                  ngoMap[g.ngo_name] = { key: g.ngo_name, name: g.ngos?.name || g.ngo_name, slug: g.ngos?.slug || null, grants: [], total: 0 }
+                }
                 ngoMap[g.ngo_name].grants.push(g)
                 ngoMap[g.ngo_name].total += g.amount_lakhs || 0
               })
               const fmt = (l: number) => l >= 100 ? `₹${(l/100).toFixed(0)} Cr` : `₹${l}L`
               const ngoGroups = Object.values(ngoMap).sort((a: any, b: any) => {
-                const ay = allNgoYears[a.name]?.size || 1
-                const by = allNgoYears[b.name]?.size || 1
+                const ay = allNgoYears[a.key]?.size || 1
+                const by = allNgoYears[b.key]?.size || 1
                 return by - ay || b.total - a.total
               })
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {ngoGroups.map((ngo: any) => {
-                    const totalYears = allNgoYears[ngo.name]?.size || 1
+                    const totalYears = allNgoYears[ngo.key]?.size || 1
                     const isMultiYear = totalYears >= 2
                     const ngoGrants = ngo.grants.sort((a: any, b: any) => b.fiscal_year.localeCompare(a.fiscal_year))
                     return (
-                      <div key={ngo.name} style={{ border: '1px solid #e0ddd4', borderRadius: 8, overflow: 'hidden' }}>
+                      <div key={ngo.key} style={{ border: '1px solid #e0ddd4', borderRadius: 8, overflow: 'hidden' }}>
                         {/* NGO header */}
                         <div style={{ background: '#FAF7F2', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-                            <button
-                              onClick={() => onSelectNGO && onSelectNGO(ngo.name)}
-                              style={{ fontWeight: 700, fontSize: 13, color: onSelectNGO ? '#E07A2F' : '#1a1a1a', background: 'none', border: 'none', padding: 0, cursor: onSelectNGO ? 'pointer' : 'default', textAlign: 'left' }}
-                            >{ngo.name}</button>
+                            {/* Links to the curated profile only when the grant carries an ngo_id. */}
+                            {ngo.slug ? (
+                              <Link
+                                href={`/ngos/${ngo.slug}`}
+                                style={{ fontWeight: 700, fontSize: 13, color: '#E07A2F', textDecoration: 'none', textAlign: 'left' }}
+                              >{ngo.name}</Link>
+                            ) : (
+                              <span style={{ fontWeight: 700, fontSize: 13, color: '#1a1a1a' }}>{ngo.name}</span>
+                            )}
                             {isMultiYear && (
                               <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 999, background: '#FFF3E8', color: '#E07A2F', border: '1px solid #F0C0A0', fontWeight: 600, flexShrink: 0 }}>★ {totalYears}-year partner</span>
                             )}

@@ -15,12 +15,13 @@ export interface BannerCounts {
   incubatorOrgs: number
   incubatorProgrammes: number
   incubatorCohorts: number
+  ngos: number
 }
 
 export default function ClientApp() {
   const [orgs, setOrgs] = useState<any[]>([])
   const [focusAreas, setFocusAreas] = useState<any[]>([])
-  const [bannerCounts, setBannerCounts] = useState<BannerCounts>({ grantsOpen: 0, grantsUpcoming: 0, incubatorOrgs: 0, incubatorProgrammes: 0, incubatorCohorts: 0 })
+  const [bannerCounts, setBannerCounts] = useState<BannerCounts>({ grantsOpen: 0, grantsUpcoming: 0, incubatorOrgs: 0, incubatorProgrammes: 0, incubatorCohorts: 0, ngos: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -34,6 +35,7 @@ export default function ClientApp() {
           { data: incOrgs },
           { data: incProgs },
           { data: incCohorts },
+          { data: ngoRows },
         ] = await Promise.all([
           supabase.from('orgs_with_focus').select('*').order('spend_max_cr', { ascending: false }),
           supabase.from('focus_areas').select('*').order('name'),
@@ -41,6 +43,7 @@ export default function ClientApp() {
           supabase.from('incubators').select('id'),
           supabase.from('incubator_programmes').select('id'),
           supabase.from('incubator_cohorts').select('id, notable_winners'),
+          supabase.from('ngos').select('id'),
         ])
 
         if (orgsErr) throw new Error(orgsErr.message)
@@ -57,6 +60,7 @@ export default function ClientApp() {
             const w = c.notable_winners
             return w && w !== '' && w !== '{}'
           }).length,
+          ngos: (ngoRows || []).length,
         })
       } catch (e: any) {
         setError(e.message)
