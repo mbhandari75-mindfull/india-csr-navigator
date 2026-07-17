@@ -40,10 +40,16 @@ export default function OrgModal({ org, onClose }: Props) {
     loadGrants()
   }, [org.id])
 
-  const years = [...new Set(grants.map(g => g.fiscal_year))].sort().reverse()
-  const filteredGrants = grantFilter === 'all' ? grants : grants.filter(g => g.fiscal_year === grantFilter)
+  // funder_total rows are foundation-level roll-ups, not individual grants.
+  // Exclude them from the record count, the documented total and the grant
+  // list so those numbers reflect real grants only. The rows are kept in the
+  // database — this is a display filter, not a deletion.
+  const realGrants = grants.filter(g => g.recipient_type !== 'funder_total')
 
-  const totalGranted = grants.reduce((s, g) => s + (g.amount_lakhs || 0), 0)
+  const years = [...new Set(realGrants.map(g => g.fiscal_year))].sort().reverse()
+  const filteredGrants = grantFilter === 'all' ? realGrants : realGrants.filter(g => g.fiscal_year === grantFilter)
+
+  const totalGranted = realGrants.reduce((s, g) => s + (g.amount_lakhs || 0), 0)
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '20px', overflowY: 'auto' }}>
@@ -141,7 +147,7 @@ export default function OrgModal({ org, onClose }: Props) {
           {/* NGO Grants section */}
           <section>
             <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#2e2e2a', marginBottom: 12, borderBottom: '1px solid #e0ddd4', paddingBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>NGOs funded ({grants.length} records · ₹{totalGranted >= 100 ? `${(totalGranted/100).toFixed(0)} Cr` : `${totalGranted}L`} documented)</span>
+              <span>NGOs funded ({realGrants.length} records · ₹{totalGranted >= 100 ? `${(totalGranted/100).toFixed(0)} Cr` : `${totalGranted}L`} documented)</span>
               {years.length > 0 && (
                 <div style={{ display: 'flex', gap: 4 }}>
                   <button onClick={() => setGrantFilter('all')} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 3, border: `1px solid ${grantFilter === 'all' ? '#1a1a1a' : '#e0ddd4'}`, background: grantFilter === 'all' ? '#1a1a1a' : '#fff', color: grantFilter === 'all' ? '#fff' : '#2e2e2a', cursor: 'pointer' }}>All</button>
@@ -159,9 +165,9 @@ export default function OrgModal({ org, onClose }: Props) {
                 <div style={{ fontSize: 13, color: '#2e2e2a' }}>No grant records yet for this foundation.</div>
               </div>
             ) : (() => {
-              // Build multi-year map from ALL grants (for badge), display filteredGrants
+              // Build multi-year map from all real grants (for badge), display filteredGrants
               const allNgoYears: Record<string, Set<string>> = {}
-              grants.forEach(g => {
+              realGrants.forEach(g => {
                 if (!allNgoYears[g.ngo_name]) allNgoYears[g.ngo_name] = new Set()
                 allNgoYears[g.ngo_name].add(g.fiscal_year)
               })
